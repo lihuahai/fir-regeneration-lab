@@ -2,10 +2,22 @@ export type Cell = string | number | null;
 export type Row = Record<string, Cell>;
 export type Column = { key: string; label: string; role: string; unit: string };
 export type Dataset = { name: string; sheet: string; columns: Column[]; rows: Row[]; importIssues: string[]; layout: string; provenance?: Record<string, { block: number; row: number }[]> };
-export type Config = { target: string; low: number; high: number; predictors: string[]; quadratic: boolean; cluster: string; family: string; area: string; areaColumn: string; roles: Record<string, string> };
+export type Config = { mlMethod?:string; mlPredictors?:string[]; target: string; low: number; high: number; predictors: string[]; quadratic: boolean; cluster: string; family: string; area: string; areaColumn: string; roles: Record<string, string> };
 export type Source = { dataset: Dataset; version: string; mode: string; modified: number; sourcePath: string; sourceName: string; config: Partial<Config> };
 export type Summary = { n: number; mean: number|null; median: number|null; sd: number|null; q1: number|null; q3: number|null; min: number|null; max: number|null; total: number|null };
 export type Group = { name: string; n: number; blocks: number; stats: Summary; total: Summary; occupied: number; occupancy: number|null; occupancyCI: (number|null)[]; validTotal: number; stages: Summary[]; traits: { key: string; stats: Summary }[] };
 export type Corr = { x: string; y: string; n: number; rho: number|null; pooledRho: number|null; p: number|null; q: number|null };
 export type Model = { error?: string; name?: string; n?: number; excluded?: number; dispersion?: number; alpha?: number|null; aic?: number; aicc?: number; poissonAic?: number; axis?: string; covariance?: string; exposure?: number; observedZero?: number; expectedZero?: number; notes?: string[]; curve?: {x: number; y: number; low: number; high: number}[]; coefficients?: {key: string; beta: number; se: number; p: number; irr: number; low: number; high: number}[]; vifs?: {key: string; value: number|null}[]; scales?: {key: string; mean: number; sd: number}[] };
 export type Analysis = { heightDefinition: string; heightConfirmed: boolean; rows: Row[]; columns: Column[]; target: string; seed: number; permutations: number; groups: Group[]; groupTest: { error?: string; h?: number; p?: number; n?: number; epsilon2?: number; small?: boolean; method?: string; informativeBlocks?: number; pairs: {a: string; b: string; contrast: number; blocks: number; p: number|null; adjusted: number|null}[] }; correlations: Corr[]; audit: {issues: string[]; structural: number; heightConflicts: number; missing: {key:string;label:string;n:number}[]; unmatchedCanopy: number}; pca: {error?: string; n?: number; excluded?: number; variance?: number[]; points?: {plot:string;group:string;x:number;y:number}[]; loadings?: {key:string;x:number;y:number}[]}; environmentScreen: {key:string;h:number|null;p:number|null;q:number|null;groups:Summary[]}[]; model: Model; overview: {n:number;total:number;validTotal:number;occupied:number;zeros:number;envCount:number;blocks:number;stages:Summary[]} };
+
+export type ImportanceResult = {
+  method:string; name:string; target:string; binary:boolean; n:number; excluded:number; blocks:number; predictors:string[]; dropped:string[];
+  folds:{fold:number;n:number;trainN:number;trainBlocks:string[];testBlocks:string[];rmse:number;baselineRmse:number}[];
+  repeats:number;seed:number;reliable:boolean;parameters:Record<string,number>;
+  metrics:{r2:number|null;rmse:number;mae:number;baselineRmse:number;skill:number|null;auc:number|null;brier:number|null};
+  importance:{key:string;delta:number;sd:number;share:number|null;positiveFolds:number;firstFolds:number}[];
+  dependence:{key:string;categorical:boolean;points:{x:number|string;y:number}[];observed:{plot:string;x:number|string;y:number}[]}[];
+  correlated:{a:string;b:string;rho:number}[];notes:string[];
+  predictions:{plot:string;block:string;observed:number;predicted:number;baseline:number}[];
+};
+export type ImportanceRun={signature:string;result:ImportanceResult};

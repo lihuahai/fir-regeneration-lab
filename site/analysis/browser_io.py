@@ -18,7 +18,7 @@ def validate_dataset(dataset):
             raise ValueError('变量信息不完整，请重新导入文件。')
         if not re.fullmatch(r'[A-Za-z][A-Za-z0-9_]{0,79}', c['key']) or c['key'] in keys:
             raise ValueError('变量编号不合法或重复。')
-        if c['role'] not in ('id', 'label', 'count', 'trait', 'environment'):
+        if c['role'] not in ('id', 'label', 'count', 'trait', 'environment', 'categorical'):
             raise ValueError('变量用途不合法。')
         if max(len(c['label']), len(c['unit'])) > 200:
             raise ValueError('变量名称或单位过长。')
@@ -47,8 +47,8 @@ def validate_config(config):
     if not isinstance(config, dict):
         raise ValueError('分析设置格式不正确。')
     result = {k: config[k] for k in ('target', 'low', 'high', 'predictors', 'quadratic',
-                                   'cluster', 'family', 'area', 'areaColumn', 'roles') if k in config}
-    for k in ('target', 'cluster', 'family', 'areaColumn'):
+                                   'cluster', 'family', 'area', 'areaColumn', 'roles', 'mlMethod', 'mlPredictors') if k in config}
+    for k in ('target', 'cluster', 'family', 'areaColumn', 'mlMethod'):
         if k in result and (not isinstance(result[k], str) or len(result[k]) > 80):
             raise ValueError('分析设置包含无效选项。')
     for k in ('low', 'high', 'area'):
@@ -59,8 +59,11 @@ def validate_config(config):
     predictors = result.get('predictors', [])
     if not isinstance(predictors, list) or len(predictors) > 3 or any(not isinstance(k, str) or len(k) > 80 for k in predictors):
         raise ValueError('模型最多同时选择 3 个环境因子。')
+    ml = result.get('mlPredictors', [])
+    if not isinstance(ml, list) or len(ml)>20 or any(not isinstance(k, str) or len(k)>80 for k in ml):
+        raise ValueError('树模型最多选择 20 个环境因子。')
     roles = result.get('roles', {})
-    if not isinstance(roles, dict) or len(roles) > MAX_COLUMNS or any(v not in ('environment', 'label', 'count', 'trait') for v in roles.values()):
+    if not isinstance(roles, dict) or len(roles) > MAX_COLUMNS or any(v not in ('environment', 'categorical', 'label', 'count', 'trait') for v in roles.values()):
         raise ValueError('变量用途设置不正确。')
     return result
 

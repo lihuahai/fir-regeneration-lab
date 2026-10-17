@@ -22,7 +22,7 @@ export async function browserApi(path:string,body?:unknown,signal?:AbortSignal):
     const response=await fetch('/analysis/example.json',{signal,cache:'no-cache'});
     if(!response.ok)throw new Error('示例数据未能载入，请刷新重试。');
     const dataset=await response.json();
-    return {dataset,mode:'example',sourceName:dataset.name,sourcePath:'',version:'browser-example-v1',modified:Date.now()/1000,config:{}} satisfies Source;
+    return {dataset,mode:'example',sourceName:dataset.name,sourcePath:'',version:'browser-example-trees-v2',modified:Date.now()/1000,config:{}} satisfies Source;
   }
   return new Promise((resolve,reject)=>{
     if(signal?.aborted){reject(new DOMException('已取消','AbortError'));return;}

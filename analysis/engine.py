@@ -80,7 +80,7 @@ def column(label):
         if norm(label) == norm(l) or label == k:
             return dict(key=k, label=l, role=role, unit=unit)
     k = "v_" + hashlib.sha1(str(label).encode()).hexdigest()[:10]
-    return dict(key=k, label=str(label).strip(), role="environment", unit="原始单位")
+    return dict(key=k, label=str(label).strip(), role="categorical" if norm(label)=="坡向" else "environment", unit="原始单位")
 
 
 def parse_table(matrix, name="数据", sheet="Sheet1"):
@@ -124,7 +124,7 @@ def parse_table(matrix, name="数据", sheet="Sheet1"):
     cols = list(columns.values())
     for c in cols:
         values = [r.get(c["key"]) for r in records.values() if r.get(c["key"]) not in (None, "")]
-        if c["key"].startswith("v_") and values and sum(num(v) is not None for v in values) < len(values)*0.8:
+        if c["key"].startswith("v_") and c["role"]!="categorical" and values and sum(num(v) is not None for v in values) < len(values)*0.8:
             c["role"] = "label"
     return dict(name=name, sheet=sheet, columns=cols, rows=list(records.values()), importIssues=issues, provenance=provenance,
                 layout="按样方编号连接左右两表" if len(id_indices)>1 else "一行一个样方")
@@ -169,7 +169,7 @@ def prepared(dataset, config):
         r["plot"] = pid
         for c in cols:
             k = c["key"]
-            if c["role"] not in ("id", "label"):
+            if c["role"] not in ("id", "label", "categorical"):
                 original = r.get(k)
                 r[k] = num(original)
                 if original not in (None, "") and r[k] is None:
@@ -220,7 +220,7 @@ def prepared(dataset, config):
              dict(key="presence",label="更新出现",role="derived",unit="0/1"),
              dict(key="laterShare",label="II、III 级占比",role="derived",unit="%"),
              dict(key="density",label="更新密度",role="derived",unit="株/100 m²")]
-    missing = [{"key":c["key"],"label":c["label"],"n":sum(r.get(c["key"]) is None for r in rows)} for c in cols if c["role"] not in ("label","id")]
+    missing = [{"key":c["key"],"label":c["label"],"n":sum(r.get(c["key"]) is None for r in rows)} for c in cols if c["role"] not in ("label","id","categorical")]
     return rows, cols+extra, dict(issues=issues, structural=structural, missing=missing,
                                 heightConflicts=sum('与已确认的高度级边界不符' in issue for issue in issues),
                                 unmatchedCanopy=sum(r["group"]=="郁闭度缺失" for r in rows))
@@ -461,7 +461,7 @@ def analyze(dataset, config=None):
     config=config or {}
     rows,cols,audit=prepared(dataset,config)
     target=config.get('target','total')
-    allowed={c['key'] for c in cols if c['role'] not in ('label','id')}
+    allowed={c['key'] for c in cols if c['role'] not in ('label','id','categorical')}
     if target not in allowed: raise ValueError("响应指标已不存在，请重新选择。")
     envs=[c['key'] for c in cols if c['role']=='environment' and c['key']!=target]
     grouped=[]
@@ -492,6 +492,6 @@ def analyze(dataset, config=None):
                 model=fit_model(rows,cols,config,target),target=target,seed=SEED,permutations=B,
                 overview=dict(n=len(rows),total=sum(r['total'] for r in valid),validTotal=len(valid),
                               occupied=sum(r['total']>0 for r in valid),zeros=sum(r['total']==0 for r in valid),
-                              envCount=len(envs),blocks=len({r['block'] for r in rows}),
+                              envCount=len(envs)+sum(c['role']=='categorical' for c in cols),blocks=len({r['block'] for r in rows}),
                               stages=[summary([r[k] for r in rows]) for k in ('n1','n2','n3')]))
     return clean(result)

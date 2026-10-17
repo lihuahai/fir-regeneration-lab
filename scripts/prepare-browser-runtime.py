@@ -12,6 +12,7 @@ def require(name):
     needed.add(name)
     for dep in packages[name]['depends']:require(dep)
 require('statsmodels')
+require('scikit-learn')
 def download(name):
     item=packages[name];target=out/item['file_name']
     if target.exists() and hashlib.sha256(target.read_bytes()).hexdigest()==item['sha256']:return name
@@ -23,7 +24,7 @@ def download(name):
 with concurrent.futures.ThreadPoolExecutor(max_workers=4) as pool:
     for name in pool.map(download,sorted(needed)):print('Ready:',name,flush=True)
 analysis=root/'public/analysis';analysis.mkdir(exist_ok=True)
-for name in ['engine.py','example.json']:shutil.copy2(root/'analysis'/name,analysis/name)
+for name in ['engine.py','importance.py','example.json']:shutil.copy2(root/'analysis'/name,analysis/name)
 # Reuse the exact validated import rules; Flask and server persistence are excluded.
 src=(root/'analysis/web.py').read_text();tree=ast.parse(src)
 functions=[ast.get_source_segment(src,node) for node in tree.body if isinstance(node,ast.FunctionDef) and node.name in {'validate_dataset','validate_config','source','read_upload'}]

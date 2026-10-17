@@ -17,7 +17,7 @@ async function initialize() {
     py.runPython(`import zipfile\nwith zipfile.ZipFile('/tmp/${name}') as wheel:\n    wheel.extractall('/home/pyodide')`);
     py.FS.unlink('/tmp/'+name);
   }
-  for (const name of ['engine.py','browser_io.py']) {
+  for (const name of ['engine.py','importance.py','browser_io.py']) {
     py.FS.writeFile('/home/pyodide/'+name,await fetchFile('./analysis/'+name));
   }
   py.runPython('import json\nfrom engine import analyze, permutation_indices\nfrom browser_io import validate_dataset, validate_config, read_upload, source');
@@ -37,6 +37,13 @@ self.onmessage = ({data}) => {
       if (path==='analyze') {
         result=py.runPython("_request=json.loads(_request_json)\njson.dumps(analyze(validate_dataset(_request['dataset']),validate_config(_request.get('config',{}))),ensure_ascii=False,allow_nan=False)");
         py.runPython('permutation_indices.cache_clear()');
+      } else if (path==='importance') {
+        status('正在加载随机森林与树模型组件…');
+        await py.loadPackage('scikit-learn');
+        py.globals.set('_progress',status);
+        result=py.runPython("from importance import fit_importance\n_request=json.loads(_request_json)\njson.dumps(fit_importance(validate_dataset(_request['dataset']),validate_config(_request.get('config',{})),_progress),ensure_ascii=False,allow_nan=False)");
+        py.globals.delete('_progress');
+        status('');
       } else if (path==='import') {
         result=py.runPython("json.dumps(source(read_upload(json.loads(_request_json)),'import'),ensure_ascii=False,allow_nan=False)");
       } else throw new Error('不支持的操作。');

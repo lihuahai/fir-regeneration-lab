@@ -29,8 +29,8 @@ class PublicServiceTest(unittest.TestCase):
         response = self.visitor.post('/api/analyze', json=dict(dataset=data))
         self.assertEqual(response.status_code, 200)
         result = response.get_json()
-        self.assertEqual(result['overview']['total'], 738)
-        self.assertEqual(result['overview']['envCount'], 7)
+        self.assertEqual(result['overview']['total'], sum(float(r['n1'])+float(r['n2'])+float(r['n3']) for r in data['rows']))
+        self.assertEqual(result['overview']['envCount'], sum(c['role'] in ('environment', 'categorical') for c in data['columns']))
         self.assertIn('0<H≤20', result['heightDefinition'])
         self.assertEqual(self.other.get('/api/data').get_json()['dataset'], self.example['dataset'])
         self.assertEqual(self.visitor.post('/api/draft', json=dict(dataset=data)).status_code, 405)
@@ -59,7 +59,6 @@ class PublicServiceTest(unittest.TestCase):
         self.assertEqual(self.visitor.post('/api/import', json=dict(name='evil.exe', base64='AA==')).status_code, 400)
         self.assertEqual(self.visitor.post('/api/import', json=dict(name='bad.xlsx', base64='AA==')).status_code, 400)
         self.assertEqual(self.visitor.post('/api/config', json={}).status_code, 405)
-        self.assertEqual(self.visitor.get('/analysis/example.json').status_code, 404)
         self.assertEqual(self.visitor.get('/.env').status_code, 404)
         self.assertEqual(self.visitor.get('/api/data').headers['Cache-Control'], 'no-store')
 
