@@ -1,0 +1,15 @@
+.git
+.venv
+node_modules
+dist
+.next
+.vinext
+.wrangler
+data
+work
+outputs
+deploy-package
+**/__pycache__
+*.tsbuildinfo
+.env*
+*.xlsx
