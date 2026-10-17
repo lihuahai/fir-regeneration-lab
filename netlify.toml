@@ -1,0 +1,25 @@
+[build]
+  publish = "site"
+  command = "echo 'Using the prebuilt browser analysis website'"
+
+[[headers]]
+  for = "/python-runtime/*"
+  [headers.values]
+    Cache-Control = "public, max-age=604800"
+    X-Content-Type-Options = "nosniff"
+
+[[headers]]
+  for = "/analysis/*"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/analysis-worker.mjs"
+  [headers.values]
+    Cache-Control = "public, max-age=0, must-revalidate"
+
+[[headers]]
+  for = "/*"
+  [headers.values]
+    Referrer-Policy = "strict-origin-when-cross-origin"
+    X-Content-Type-Options = "nosniff"

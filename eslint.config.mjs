@@ -12,6 +12,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "site/**",
+    "public/python-runtime/**",
+    "public/analysis/**",
     "deploy-package/**",
     ".venv/**",
     "next-env.d.ts",
